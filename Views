@@ -1,0 +1,95 @@
+# portfolio-projects-
+-- every table in the employee database has its dates captured in a wrong way ie. backdated 18 years.
+-- we will need to collect this except for the cases when any of the date columns has the arbitrary end date 9999-01-01.
+--We need to update the employee.employees table for both the birth_date and hire_date columns.
+--The following tables require the from_date and to_date to be updated:
+--employees.department_employee
+--employees.department_manager
+--employees.salary
+--employees.title
+--our client, HR Analytica very specifically DO NOT want their source data to be modified for any reason.
+-- we will use the VEIW option
+-- we can store these veiws in another new schema called v_employees
+-- Note how the implementation of the views do not need the UPDATE steps we used previously
+-- but instead we can use a simple CASE WHEN to setup an if-else style approach to updating our date columns below
+DROP SCHEMA IF EXISTS v_employees CASCADE;
+CREATE SCHEMA v_employees;
+-- department
+DROP VIEW IF EXISTS v_employee.department;
+CREATE VIEW v_employees.department AS
+SELECT
+  *
+FROM
+  employees.department;
+--department employee
+  DROP VIEW IF EXISTS v_employees.department_employee;
+CREATE VIEW v_employees.department_employee AS
+SELECT
+  employee_id,
+  department_id,
+  from_date + interval '18 years' AS from_date,
+  CASE
+    -- <> means not equal to
+    WHEN to_date <> '9999-01-01' THEN to_date + interval '18 years'
+    ELSE to_date
+  END AS to_date
+FROM
+  employees.department_employee;
+-- department manager
+  DROP VIEW IF EXISTS v_employees.department_manager;
+CREATE VIEW v_employees.department_manager AS
+SELECT
+  employee_id,
+  department_id,
+  from_date + interval '18 years' AS from_date,
+  CASE
+    WHEN to_date <> '9999-01-01' THEN to_date + interval '18 years'
+    ELSE to_date
+  END AS to_date
+FROM
+  employees.department_manager;
+-- employee
+  DROP VIEW IF EXISTS v_employees.employee;
+CREATE VIEW v_employees.employee AS
+SELECT
+  id,
+  birth_date + interval '18 years' AS birth_date,
+  first_name,
+  last_name,
+  gender,
+  hire_date + interval '18 years' AS hire_date
+FROM
+  employees.employee;
+-- salary
+  DROP VIEW IF EXISTS v_employees.salary;
+CREATE VIEW v_employees.salary AS
+SELECT
+  employee_id,
+  amount,
+  from_date + interval '18 years' AS from_date,
+  CASE
+    WHEN to_date <> '9999-01-01' THEN to_date + interval '18 years'
+    ELSE to_date
+  END AS to_date
+FROM
+  employees.salary;
+-- title
+  DROP VIEW IF EXISTS v_employees.title;
+CREATE VIEW v_employees.title AS
+SELECT
+  employee_id,
+  title,
+  from_date + interval '18 years' AS from_date,
+  CASE
+    WHEN to_date <> '9999-01-01' THEN to_date + interval '18 years'
+    ELSE to_date
+  END AS to_date
+FROM
+  employees.title;
+  
+-- let see the salary of the employee 10001 in the VEIW table 
+SELECT *
+FROM v_employees.salary
+WHERE employee_id = 10001
+ORDER BY from_date DESC; 
+
